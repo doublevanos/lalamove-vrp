@@ -31,10 +31,10 @@ class Address:
             and the system will randomly pick one from the addresses list
         
         >>> a = Address()
-        >>> print a.long, a.lat
+        >>> print a.lng, a.lat
         
         >>> a = Address('680 Folsom St, San Francisco, CA')
-        >>> print a.long, a.lat
+        >>> print a.lng, a.lat
         -122.3985641 37.7845584
         
         """
@@ -60,17 +60,17 @@ class Address:
         if iaddr is None:
             line = random.randrange(0, len(self.addresses))
             addr = self.addresses[line][random.randrange(0, len(self.addresses[line]))]
-            self.long = addr['coordinates']['longitude']
+            self.lng = addr['coordinates']['longitude']
             self.lat = addr['coordinates']['latitude']
             self.addr = ",".join(addr['location']['display_address'])
         else:
             gmaps = googlemaps.Client(key=self.googlemaps_key)
             geocode = gmaps.geocode(iaddr)
             self.lat = geocode[0]['geometry']['location']['lat']
-            self.long = geocode[0]['geometry']['location']['lng']
+            self.lng = geocode[0]['geometry']['location']['lng']
             self.addr = iaddr
 
-        return self.long, self.lat
+        return self.lng, self.lat
 
     def dist(self, t_addr, s_addr=None):
         """Calculate distance between *this* address and another provided
@@ -89,13 +89,13 @@ class Address:
 
         if s_addr is None:
             lat01 = self.lat
-            long01 = self.long
+            lng01 = self.lng
         else:
             lat01 = s_addr.lat
-            long01 = s_addr.long
+            lng01 = s_addr.lng
 
-        directions = gmaps.directions(origin=(lat01, long01),
-                                      destination=(t_addr.lat, t_addr.long))
+        directions = gmaps.directions(origin=(lat01, lng01),
+                                      destination=(t_addr.lat, t_addr.lng))
 
         return directions[0]['legs'][0]['distance']['value'], \
                directions[0]['legs'][0]['duration']['value']
@@ -118,13 +118,13 @@ class Address:
 
         if s_addr is None:
             lat01 = self.lat
-            lng01 = self.long
-        else:
-            lat01 = t_saddr.lat
             lng01 = self.lng
+        else:
+            lat01 = s_addr.lat
+            lng01 = s_addr.lng
 
         t_dirs = gmaps.directions(origin=(lat01,lng01),
-                                  destination=(t_addr.lat, t_addr.long))
+                                  destination=(t_addr.lat, t_addr.lng))
 
         if isinstance(t_dirs, list):
             dirs = t_dirs[0]['legs']
@@ -136,7 +136,6 @@ class Address:
         #    self.total_duration = self.total_duration + leg['duration']['value']
 
         return dirs
-
 
 if __name__ == "__main__":
     import doctest
