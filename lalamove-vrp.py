@@ -1,7 +1,6 @@
 from shipment import Shipment
 from location import Location
 from address import Address
-from flask import Flask
 import random
 
 PICKUP = 1
@@ -190,15 +189,7 @@ def main():
     printOrders(drivers)
 
 
-app = Flask(__name__)
-
-@app.route('/')
-def hello_world():
-    return 'Hello Lala!'
-
-
 if __name__ == '__main__':
-    #main()
-    app.run()
+    main()
 
 

@@ -1,1 +1,1 @@
-web: gunicorn lalamove-vrp:app --log-file -
+web: gunicorn lalamove-web:app --log-file -
