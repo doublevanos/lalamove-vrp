@@ -11,5 +11,9 @@ def not_found(error):
 def hello_world():
     return 'Hello Lala!'
 
-@app.route('/api/v1.0/')
+#@app.route('/api/v1.0/')
+#def
+
+
+if __name__ == '__main__':
     app.run()
