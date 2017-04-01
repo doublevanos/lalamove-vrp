@@ -1,3 +1,4 @@
+import json
 import address
 import timewindow
 
@@ -32,6 +33,23 @@ class Shipment:
         self.directions = self.dropoff_loc.directions(self.pickup_loc)
         self.total_distance = self.directions[0]['distance']['value']
         self.totol_duration = self.directions[0]['duration']['value']
+
+
+class ShipmentJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        """
+        Serializes the content of Shipment class.  This is a support function of Shipment to help output list of
+        Shipment
+        :param obj: Object passed in to serialize
+        :return: 
+        """
+        if isinstance(obj, Shipment):
+            return [{'service_type': obj.service_type},
+                    {'pickup_location': json.dumps(obj.pickup_loc.__dict__)},
+                    {'delivery_location': json.dumps(obj.dropoff_loc.__dict__)},
+                    {'pickup_time': json.dumps(obj.pickup_time.__dict__)},
+                    {'delivery_time': json.dumps(obj.dropoff_time.__dict__)}]
+        return super(ShipmentJSONEncoder, self).default(obj)
 
 
 if __name__ == "__main__":
