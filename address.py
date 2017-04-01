@@ -4,6 +4,10 @@ import googlemaps
 
 
 def loadfile():
+    """ Helper function (NOT PART OF THE CLASS) which loads list of address from disk to randomize
+    
+    :return: 
+    """
     filename = "yelp_business_hk.txt"
 
     # Reading the file and combinging it
@@ -40,6 +44,7 @@ class Address:
         """
         self.generate_addr(iaddr)
 
+
     def generate_addr(self, iaddr=None):
         """Generate a new address
         :param iaddr: String representing a custom set address by the user.  If left blank, will default to None
@@ -72,6 +77,7 @@ class Address:
 
         return self.lng, self.lat
 
+
     def dist(self, t_addr, s_addr=None):
         """Calculate distance between *this* address and another provided
         :param t_addr: Target address object
@@ -100,6 +106,7 @@ class Address:
         return directions[0]['legs'][0]['distance']['value'], \
                directions[0]['legs'][0]['duration']['value']
 
+
     def printAddresses(self):
         """ This method will print the address set in the current class instance
         """
@@ -109,10 +116,15 @@ class Address:
                 print store['coordinates']
                 print store['location']['display_address']
 
+
     def directions(self, t_addr, s_addr=None):
         """ Returns the directions, distance, leg, and travel-time between 2 addresses
         :param t_addr:  The target address
         :param s_addr:  The Source address, if left blank will use current instance address
+        
+        >>> dir01 = Address().directions(Address('680 folsom, san francisco, ca'), Address('115 sansome st, san francisco, ca'))
+        >>> print len(dir01[0]['distance']) > 0
+        True
         """
         gmaps = googlemaps.Client(key=self.googlemaps_key)
 
@@ -126,7 +138,7 @@ class Address:
         t_dirs = gmaps.directions(origin=(lat01,lng01),
                                   destination=(t_addr.lat, t_addr.lng))
 
-        if isinstance(t_dirs, list):
+        if len(t_dirs):
             dirs = t_dirs[0]['legs']
         else:
             dirs = t_dirs['legs']
@@ -136,6 +148,34 @@ class Address:
         #    self.total_duration = self.total_duration + leg['duration']['value']
 
         return dirs
+
+
+    def directions_with_waypoints(self, waypoints):
+        """ Returns step-by-step directions from origin to destination
+        
+        :param waypoints: A list of all addresses.  Will be traversed in order
+        :return: JSON of direction (straight from Google API)
+        >>> dir01 = Address().directions_with_waypoints([Address('685 Market St, san francisco, ca'), Address('680 folsom, san francisco, ca'), Address('115 sansome st, san francisco, ca')])
+        >>> print len(dir01) > 0
+        True
+        """
+        gmaps = googlemaps.Client(key=self.googlemaps_key)
+
+        # Concatinating waypoints
+        wp = []
+        for i in range(2,len(waypoints)-1):
+            wp.append(str(waypoints[i].lat) + "," + str(waypoints[0].lng))
+
+        # If there are waypoints, then we route with them, otherwise we don't send waypoints to API
+        if len(wp):
+            t_dirs = gmaps.directions(origin=(waypoints[0].lat,waypoints[0].lng),
+                                      destination=(waypoints[len(waypoints)-1].lat, waypoints[len(waypoints)-1].lng),
+                                      waypoints="|".join(wp))
+        else:
+            t_dirs = gmaps.directions(origin=(waypoints[0].lat,waypoints[0].lng),
+                                      destination=(waypoints[len(waypoints)-1].lat, waypoints[len(waypoints)-1].lng))
+        return t_dirs
+
 
 if __name__ == "__main__":
     import doctest
