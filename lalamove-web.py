@@ -109,6 +109,10 @@ def deliver_packages():
     return jsonify(results)
 
 
+"""
+ Functions to support API
+"""
+
 def createOrder(order):
     """ This method actually creates the order object that is handed off to the driver
     :param order: The order to be pickedup and delivered
