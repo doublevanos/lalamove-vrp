@@ -169,7 +169,7 @@ def delivery_route():
 """
 
 
-def createShipmentSplit(orders):
+def createShipmentSplit(_orders):
     """ We order all the shipments by start, stop times.  Once ordered, this method will
     identify where in the list to split the shipments between the drivers
     """
@@ -177,7 +177,7 @@ def createShipmentSplit(orders):
     t_orders = []
 
     # First, we order by pickup time and delivery time (but we can't use standard sort since we have 2 keys)
-    for order in orders:
+    for order in _orders:
         i = 0
         while i < len(t_orders) \
                 and order.pickup_time.time > t_orders[i].pickup_time.time:
@@ -216,11 +216,11 @@ def createShipmentSplit(orders):
     return splitPoints, t_orders
 
 
-def sendToDrivers(splits, orders):
+def sendToDrivers(splits, _orders):
     """ Assigns orders to drivers
     
     :param splits: The list of split points
-    :param orders: All orders
+    :param _orders: All orders
     :return: List of drivers with packages assigned to each driver
     """
     drivers = [[] for i in range(len(splits)+1)]
@@ -228,7 +228,7 @@ def sendToDrivers(splits, orders):
 
     # Assigning package to driver but also sorting it by time
     i = 0
-    for order in orders:
+    for order in _orders:
         j = 0
         while (j < len(drivers[driver]))\
             and order.pickup_time.time >= drivers[driver][j][1].time.time:
