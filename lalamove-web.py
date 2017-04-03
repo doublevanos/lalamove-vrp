@@ -53,9 +53,14 @@ def generate_orders():
 
     # Create random number of orders up to MAX_DELIVERY constant
     # Using i as the service type/name
-    for i in range(0, random.randrange(1, MAX_DELIVERY-len(orders))):
-        orders.append(Shipment(str(max_orders)))
-        max_orders += 1
+    # We also only generate more orders if we have not hit the limit
+    range_ceiling = MAX_DELIVERY+1 - len(orders)
+    if range_ceiling > 1:
+        for i in range(0, random.randrange(1, range_ceiling)):
+            orders.append(Shipment(str(max_orders)))
+            max_orders += 1
+    else:
+        print "Package limit reached"
 
     return jsonify(orders=orders)
 
