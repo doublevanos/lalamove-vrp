@@ -68,10 +68,14 @@ def generate_orders():
 @app.route('/api/v1.0/orders/remove/', methods=['GET'])
 def remove_random():
     global orders
-    order_id = random.randrange(0, len(orders))
-    order = orders[order_id]
-    orders.remove(order)
-    return jsonify({'removed': order})
+
+    if (len(orders)):
+        order_id = random.randrange(0, len(orders))
+        order = orders[order_id]
+        orders.remove(order)
+        return jsonify({'removed': order})
+    else:
+        return make_response(jsonify({'error': "Nothing to remove"}))
 
 
 @app.route('/api/v1.0/orders/remove/<string:service_type>', methods=['GET'])
