@@ -129,14 +129,31 @@ def delivery_route():
     d = 1
     for driver in drivers:
         dr = []
-        for order in driver:
+        time_overflow = 0
+        for i in range(0, len(driver)):
+            order = driver[i]
+
+            # Calculating travel time, only if it's the second stop and beyond
+            dist = 0
+            dur = 0
+            if i >= 1:
+                dist, dur = order[1].address.dist(driver[i-1][1].address)
+                time_window = order[1].time.time - driver[i-1][1].time.time
+                if ((dur + time_overflow) > time_window):
+                    time_overflow = dur - time_window
+                else:
+                    time_overflow = 0
+
             dr.append([{"ServiceType": order[0]},
                        {"Action": action[order[2]]},
                        {"Time": order[1].time.time_string},
                        {"Location": [
                             {"lat": order[1].address.lat},
                             {"lng": order[1].address.lng}]
-                        }])
+                        },
+                       {"Distance": dist},
+                       {"TravelTime": dur},
+                       {"Delayedby": time_overflow}])
         results.append({"driver": dr})
         d += 1
 
