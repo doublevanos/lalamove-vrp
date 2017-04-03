@@ -115,6 +115,8 @@ def deliver_packages():
 def delivery_route():
     global orders
 
+    action = ['NULL','PICKUP','DELIVER']
+
     splits, sorted_orders = createShipmentSplit(orders)
     drivers = sendToDrivers(splits, sorted_orders)
 
@@ -124,7 +126,7 @@ def delivery_route():
         dr = []
         for order in driver:
             dr.append([{"ServiceType": order[0]},
-                       {"Action": order[2]},
+                       {"Action": action[order[2]]},
                        {"Time": order[1].time.time_string},
                        {"Location": [
                             {"lat": order[1].address.lat},
