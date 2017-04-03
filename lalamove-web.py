@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask import make_response
+from flask_cors import CORS
 from shipment import Shipment
 from shipment import ShipmentJSONEncoder
 from location import Location
@@ -15,6 +16,7 @@ orders = []
 max_orders = 0
 
 app = Flask(__name__)
+CORS(app)
 
 @app.errorhandler(404)
 def not_found():
@@ -107,6 +109,11 @@ def deliver_packages():
             results.append({'driver': Address().directions_with_waypoints(dr)})
 
     return jsonify(results)
+
+
+@app.route('/api/v1.0/orders/drivers/path/', methods=['GET'])
+def delivery_route():
+    return True
 
 
 """
