@@ -45,10 +45,10 @@ class ShipmentJSONEncoder(json.JSONEncoder):
         """
         if isinstance(obj, Shipment):
             return [{'service_type': obj.service_type},
-                    {'pickup_location': json.dumps(obj.pickup_loc.__dict__)},
-                    {'delivery_location': json.dumps(obj.dropoff_loc.__dict__)},
-                    {'pickup_time': json.dumps(obj.pickup_time.__dict__)},
-                    {'delivery_time': json.dumps(obj.dropoff_time.__dict__)}]
+                    {'pickup_location': obj.pickup_loc.__dict__},
+                    {'delivery_location': obj.dropoff_loc.__dict__},
+                    {'pickup_time': obj.pickup_time.__dict__},
+                    {'delivery_time': obj.dropoff_time.__dict__}]
         return super(ShipmentJSONEncoder, self).default(obj)
 
 
