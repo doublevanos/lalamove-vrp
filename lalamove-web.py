@@ -111,9 +111,29 @@ def deliver_packages():
     return jsonify(results)
 
 
-@app.route('/api/v1.0/orders/drivers/path/', methods=['GET'])
+@app.route('/api/v1.0/orders/path/', methods=['GET'])
 def delivery_route():
-    return True
+    global orders
+
+    splits, sorted_orders = createShipmentSplit(orders)
+    drivers = sendToDrivers(splits, sorted_orders)
+
+    results = []
+    d = 1
+    for driver in drivers:
+        dr = []
+        for order in driver:
+            dr.append([{"ServiceType": order[0]},
+                       {"Action": order[2]},
+                       {"Time": order[1].time.time_string},
+                       {"Location": [
+                            {"lat": order[1].address.lat},
+                            {"lng": order[1].address.lng}]
+                        }])
+        results.append({"driver": dr})
+        d += 1
+
+    return jsonify(results)
 
 
 """
