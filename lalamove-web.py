@@ -142,28 +142,6 @@ def delivery_route():
  Functions to support API
 """
 
-def createOrder(order):
-    """ This method actually creates the order object that is handed off to the driver
-    :param order: The order to be pickedup and delivered
-    :return orders: A new list of orders where pickup/dropoff are just stops
-    """
-    orders = []
-    orders.append([order.service_type,
-                   Location(order.pickup_loc,
-                            order.pickup_time),
-                   PICKUP])
-    orders.append([order.service_type,
-                   Location(order.dropoff_loc,
-                            order.dropoff_time),
-                   DELIVERY])
-    return orders
-
-
-def getTime(order):
-    """ Small operator function to assist in sorting
-    """
-    return order[1].time.time
-
 
 def createShipmentSplit(orders):
     """ We order all the shipments by start, stop times.  Once ordered, this method will
@@ -222,14 +200,30 @@ def sendToDrivers(splits, orders):
     drivers = [[] for i in range(len(splits)+1)]
     driver = 0
 
-    for i in range(0, len(orders)):
-        drivers[driver] += createOrder(orders[i])
+    # Assigning package to driver but also sorting it by time
+    i = 0
+    for order in orders:
+        j = 0
+        while (j < len(drivers[driver]))\
+            and order.pickup_time.time >= drivers[driver][j][1].time.time:
+            j += 1
+        drivers[driver].insert(j, [order.service_type,
+                                   Location(order.pickup_loc,
+                                            order.pickup_time),
+                                   PICKUP])
+
+        k = 0
+        while (k < len(drivers[driver]))\
+            and order.dropoff_time.time >= drivers[driver][k][1].time.time:
+            k += 1
+        drivers[driver].insert(k, [order.service_type,
+                                   Location(order.dropoff_loc,
+                                            order.dropoff_time),
+                                   DELIVERY])
+
         if i in splits:
             driver += 1
-
-    # Order the pickup and drop offs
-    for driver in drivers:
-        driver.sort(key=getTime)
+        i += 1
 
     return drivers
 
