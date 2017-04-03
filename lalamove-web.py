@@ -6,6 +6,7 @@ from shipment import ShipmentJSONEncoder
 from location import Location
 from address import Address
 import random
+import threading
 
 PICKUP = 1
 DELIVERY = 2
@@ -14,6 +15,7 @@ MAX_DELIVERY = 5
 
 orders = []
 max_orders = 0
+lock = threading.Lock();
 
 app = Flask(__name__)
 CORS(app)
@@ -33,8 +35,10 @@ def reset():
     global orders
     global max_orders
 
-    del orders[:]
-    max_orders = 0
+    with lock:
+        del orders[:]
+        max_orders = 0
+
     return make_response(jsonify({'success': 'App reset'}), 200)
 
 
@@ -51,16 +55,17 @@ def generate_orders():
     # First we purge the existing orders
     #    del orders[:]
 
-    # Create random number of orders up to MAX_DELIVERY constant
-    # Using i as the service type/name
-    # We also only generate more orders if we have not hit the limit
-    range_ceiling = MAX_DELIVERY+1 - len(orders)
-    if range_ceiling > 1:
-        for i in range(0, random.randrange(1, range_ceiling)):
-            orders.append(Shipment(str(max_orders)))
-            max_orders += 1
-    else:
-        print "Package limit reached"
+    with lock:
+        # Create random number of orders up to MAX_DELIVERY constant
+        # Using i as the service type/name
+        # We also only generate more orders if we have not hit the limit
+        range_ceiling = MAX_DELIVERY+1 - len(orders)
+        if range_ceiling > 1:
+            for i in range(0, random.randrange(1, range_ceiling)):
+                orders.append(Shipment(str(max_orders)))
+                max_orders += 1
+        else:
+            print "Package limit reached"
 
     return jsonify(orders=orders)
 
@@ -72,7 +77,8 @@ def remove_random():
     if (len(orders)):
         order_id = random.randrange(0, len(orders))
         order = orders[order_id]
-        orders.remove(order)
+        with lock:
+            orders.remove(order)
         return jsonify({'removed': order})
     else:
         return make_response(jsonify({'error': "Nothing to remove"}))
@@ -85,7 +91,8 @@ def remove_order(service_type):
     for i in range(0, len(orders)):
         if orders[i].service_type == service_type:
             order = orders[i]
-            orders.remove(order)
+            with lock:
+                orders.remove(order)
             return jsonify({'removed': order})
 
     return make_response(jsonify({'error': 'Not found'}), 404)
@@ -126,8 +133,9 @@ def delivery_route():
 
     action = ['NULL','PICKUP','DELIVER']
 
-    splits, sorted_orders = createShipmentSplit(orders)
-    drivers = sendToDrivers(splits, sorted_orders)
+    with lock:
+        splits, sorted_orders = createShipmentSplit(orders)
+        drivers = sendToDrivers(splits, sorted_orders)
 
     results = []
     d = 1
