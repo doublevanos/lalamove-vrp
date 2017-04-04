@@ -132,7 +132,7 @@ def deliver_packages():
     return jsonify(results)
 
 
-@app.route('/api/v1.0/orders/path', methods=['GET'])
+@app.route('/api/v1.0/orders/route', methods=['GET'])
 def delivery_route():
     global orders
 
