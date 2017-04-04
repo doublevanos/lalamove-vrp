@@ -73,7 +73,7 @@ def generate_orders():
     return jsonify(orders=orders)
 
 
-@app.route('/api/v1.0/orders/remove/', methods=['GET'])
+@app.route('/api/v1.0/orders/remove', methods=['GET'])
 def remove_random():
     global orders
     global max_orders
@@ -114,7 +114,7 @@ def get_order(service_type):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
 
-@app.route('/api/v1.0/orders/deliver/', methods=['GET'])
+@app.route('/api/v1.0/orders/deliver', methods=['GET'])
 def deliver_packages():
     global orders
 
@@ -132,7 +132,7 @@ def deliver_packages():
     return jsonify(results)
 
 
-@app.route('/api/v1.0/orders/path/', methods=['GET'])
+@app.route('/api/v1.0/orders/path', methods=['GET'])
 def delivery_route():
     global orders
 
