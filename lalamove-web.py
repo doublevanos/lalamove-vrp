@@ -30,6 +30,11 @@ def hello_world():
     return 'Hello LalaMove!'
 
 
+@app.route('/favicon.ico')
+def handle_favicon():
+    return make_response(jsonify({'success': 'Found'}), 200)
+
+
 @app.route('/api/v1.0/reset', methods=['GET'])
 def reset():
     global orders
