@@ -162,6 +162,10 @@ except:
 
 
 def persistOrders(orders):
+    """ Persists the orders list to database
+    :param orders: a python list for order
+    :return: 
+    """
     global conn
     cur = conn.cursor()
 
@@ -182,7 +186,11 @@ def persistOrders(orders):
 
 
 def removeOrder(service_type):
-
+    """
+    Removes a specific order from the DB
+    :param service_type: the order id to remove
+    :return: order id removed
+    """
     print service_type
     global conn
     cur = conn.cursor()
@@ -192,6 +200,10 @@ def removeOrder(service_type):
 
 
 def numberOfOrders():
+    """
+    Returns the total number of orders stored in the DB
+    :return: number of orders
+    """
     global conn
     cur = conn.cursor()
     cur.execute("""select count(*) from orders;""")
@@ -204,6 +216,10 @@ def numberOfOrders():
 
 
 def retrieveMaxOrderID():
+    """
+    The order IDs are sequential, returing the max().  This is used to add additional orders
+    :return: Max ID
+    """
     global conn
     cur = conn.cursor()
     cur.execute("""select max(service_type) from orders;""")
@@ -217,6 +233,10 @@ def retrieveMaxOrderID():
 
 
 def retrieveOrders():
+    """
+    Reads in all the orders from the DB
+    :return: order list
+    """
     global conn
     orders = []
 
@@ -233,6 +253,10 @@ def retrieveOrders():
 
 
 def resetDatasource():
+    """
+    Clears out all orders from the database
+    :return: N/A
+    """
     global conn
     cur = conn.cursor()
     cur.execute("""delete from orders;""")

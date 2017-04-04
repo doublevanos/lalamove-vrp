@@ -77,11 +77,21 @@ class Address:
 
 
     def set_new_coords(self, ilat, ilng):
+        """
+        Sets new Lat/Long coordinates
+        :param ilat: New Latitude
+        :param ilng: New Longitude
+        :return: N/A
+        """
         self.lat = ilat
         self.lng = ilng
 
 
     def formatted_address(self):
+        """
+        Looks up the address based on the lat/lng from googlemaps
+        :return: formatted street address from the lat/lng
+        """
         gmaps = googlemaps.Client(key=self.googlemaps_key)
         geocode = gmaps.reverse_geocode((self.lat, self.lng))
         return geocode[0]['formatted_address']
