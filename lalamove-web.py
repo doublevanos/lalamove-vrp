@@ -13,12 +13,12 @@ DELIVERY = 2
 MAX_DRIVERS = 2
 MAX_DELIVERY = 5
 
+app = Flask(__name__)
+CORS(app)
+
 orders = []
 max_orders = 0
 lock = threading.Lock();
-
-app = Flask(__name__)
-CORS(app)
 
 @app.errorhandler(404)
 def not_found():
@@ -52,8 +52,6 @@ def list_all_orders():
 def generate_orders():
     global orders
     global max_orders
-    # First we purge the existing orders
-    #    del orders[:]
 
     with lock:
         # Create random number of orders up to MAX_DELIVERY constant
@@ -73,27 +71,29 @@ def generate_orders():
 @app.route('/api/v1.0/orders/remove/', methods=['GET'])
 def remove_random():
     global orders
+    global max_orders
 
-    if (len(orders)):
-        order_id = random.randrange(0, len(orders))
-        order = orders[order_id]
-        with lock:
+    with lock:
+        if len(orders):
+            order_id = random.randrange(0, len(orders))
+            order = orders[order_id]
             orders.remove(order)
-        return jsonify({'removed': order})
-    else:
-        return make_response(jsonify({'error': "Nothing to remove"}))
+            return jsonify({'removed': order})
+        else:
+            return make_response(jsonify({'error': "Nothing to remove"}))
 
 
 @app.route('/api/v1.0/orders/remove/<string:service_type>', methods=['GET'])
 def remove_order(service_type):
     global orders
+    global max_orders
 
-    for i in range(0, len(orders)):
-        if orders[i].service_type == service_type:
-            order = orders[i]
-            with lock:
+    with lock:
+        for i in range(0, len(orders)):
+            if orders[i].service_type == service_type:
+                order = orders[i]
                 orders.remove(order)
-            return jsonify({'removed': order})
+                return jsonify({'removed': order})
 
     return make_response(jsonify({'error': 'Not found'}), 404)
 
