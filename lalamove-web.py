@@ -1,12 +1,16 @@
+import os
+import random
+import urlparse
+import psycopg2
+
 from flask import Flask, jsonify
 from flask import make_response
 from flask_cors import CORS
+
+from address import Address
+from location import Location
 from shipment import Shipment
 from shipment import ShipmentJSONEncoder
-from location import Location
-from address import Address
-import random
-import threading
 
 PICKUP = 1
 DELIVERY = 2
@@ -15,21 +19,6 @@ MAX_DELIVERY = 5
 
 app = Flask(__name__)
 CORS(app)
-
-orders = []
-max_orders = 0
-lock = threading.Lock();
-
-@app.after_request
-def add_header(response):
-    """
-    Add headers to both force latest IE rendering engine or Chrome Frame,
-    and also to cache the rendered page for 10 minutes.
-    """
-    response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
-    response.headers['Cache-Control'] = 'public, max-age=0'
-    return response
-
 
 @app.errorhandler(404)
 def not_found():
@@ -48,61 +37,53 @@ def handle_favicon():
 
 @app.route('/api/v1.0/reset', methods=['GET'])
 def reset():
-    global orders
-    global max_orders
-
-    with lock:
-        del orders[:]
-        max_orders = 0
-
+    resetDatasource()
     return make_response(jsonify({'success': 'App reset'}), 200)
 
 
 @app.route('/api/v1.0/orders/list', methods=['GET'])
 def list_all_orders():
-    global orders
+    orders = retrieveOrders()
     return jsonify(orders=orders)
 
 
 @app.route('/api/v1.0/orders/create', methods=['GET'])
 def generate_orders():
-    global orders
-    global max_orders
+    orders = retrieveOrders()
+    max_orders = retrieveMaxOrderID()
+    global conn
 
-    with lock:
-        # Create random number of orders up to MAX_DELIVERY constant
-        # Using i as the service type/name
-        # We also only generate more orders if we have not hit the limit
-        range_ceiling = MAX_DELIVERY+1 - len(orders)
-        if range_ceiling > 1:
-            for i in range(0, random.randrange(1, range_ceiling)):
-                orders.append(Shipment(str(max_orders)))
-                max_orders += 1
-        else:
-            print "Package limit reached"
+    # Create random number of orders up to MAX_DELIVERY constant
+    # Using i as the service type/name
+    # We also only generate more orders if we have not hit the limit
+    range_ceiling = MAX_DELIVERY+1 - len(orders)
+    if range_ceiling > 1:
+        for i in range(0, random.randrange(1, range_ceiling)):
+            orders.append(Shipment(str(max_orders)))
+            max_orders += 1
+    else:
+        print "Package limit reached"
 
+    persistOrders(orders)
     return jsonify(orders=orders)
 
 
 @app.route('/api/v1.0/orders/remove', methods=['GET'])
 def remove_random():
-    global orders
-    global max_orders
+    orders = retrieveOrders()
 
-    with lock:
-        if len(orders):
-            order_id = random.randrange(0, len(orders))
-            order = orders[order_id]
-            orders.remove(order)
-            return jsonify({'removed': order})
-        else:
-            return make_response(jsonify({'error': "Nothing to remove"}))
+    if len(orders):
+        order_id = random.randrange(0, len(orders))
+        order = orders[order_id]
+        removeOrder(order.service_type)
+        return jsonify({'removed': order})
+    else:
+        return make_response(jsonify({'error': "Nothing to remove"}))
 
 
 @app.route('/api/v1.0/orders/deliver', methods=['GET'])
 def deliver_packages():
-    global orders
-
+    orders = retrieveOrders()
     splits, sorted_orders = createShipmentSplit(orders)
     drivers = sendToDrivers(splits, sorted_orders)
 
@@ -119,13 +100,11 @@ def deliver_packages():
 
 @app.route('/api/v1.0/orders/route', methods=['GET'])
 def delivery_route():
-    global orders
-
     action = ['NULL','PICKUP','DELIVER']
 
-    with lock:
-        splits, sorted_orders = createShipmentSplit(orders)
-        drivers = sendToDrivers(splits, sorted_orders)
+    orders = retrieveOrders()
+    splits, sorted_orders = createShipmentSplit(orders)
+    drivers = sendToDrivers(splits, sorted_orders)
 
     results = []
     d = 1
@@ -165,6 +144,99 @@ def delivery_route():
 """
  Functions to support API
 """
+
+# Obtaining a DB connection
+urlparse.uses_netloc.append("postgres")
+url = urlparse.urlparse(os.environ["DATABASE_URL"])
+
+try:
+    //conn = psycopg2.connect("dbname='jwong' user='jwong' host='localhost'")
+    conn = psycopg2.connect(
+        database=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port)
+except:
+    print "I am unable to connect to the database"
+
+
+def persistOrders(orders):
+    global conn
+    cur = conn.cursor()
+
+    maxid = retrieveMaxOrderID()
+    for order in orders:
+
+        # We only want to store new entries, so we check what the last ID was.
+        if order.service_type >= maxid:
+            cur.execute("""INSERT INTO ORDERS (SERVICE_TYPE, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng, pickup_time, dropoff_time) VALUES (%s, %s, %s, %s, %s, %s, %s);""",
+                        (order.service_type,
+                         order.pickup_loc.lat,
+                         order.pickup_loc.lng,
+                         order.dropoff_loc.lat,
+                         order.dropoff_loc.lng,
+                         order.pickup_time.time,
+                         order.dropoff_time.time))
+    conn.commit()
+
+
+def removeOrder(service_type):
+
+    print service_type
+    global conn
+    cur = conn.cursor()
+    cur.execute("""delete from orders where service_type = %s""", str(service_type))
+    conn.commit()
+    return service_type
+
+
+def numberOfOrders():
+    global conn
+    cur = conn.cursor()
+    cur.execute("""select count(*) from orders;""")
+    if cur.rowcount:
+        count = cur.fetchone()[0]
+    else:
+        count = 0
+
+    return count
+
+
+def retrieveMaxOrderID():
+    global conn
+    cur = conn.cursor()
+    cur.execute("""select max(service_type) from orders;""")
+
+    if numberOfOrders():
+        max = cur.fetchone()[0]
+        max += 1
+    else:
+        max = 0
+    return max
+
+
+def retrieveOrders():
+    global conn
+    orders = []
+
+    cur = conn.cursor()
+    cur.execute("""select * from orders;""")
+    for row in cur:
+        shipment = Shipment(row[0])
+        shipment.pickup_loc.set_new_coords(row[1], row[2])
+        shipment.dropoff_loc.set_new_coords(row[3], row[4])
+        shipment.pickup_time.set_time(int(row[5]))
+        shipment.dropoff_time.set_time(int(row[6]))
+        orders.append(shipment)
+    return orders
+
+
+def resetDatasource():
+    global conn
+    cur = conn.cursor()
+    cur.execute("""delete from orders;""")
+    conn.commit()
 
 
 def createShipmentSplit(_orders):
