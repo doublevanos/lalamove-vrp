@@ -88,32 +88,6 @@ def remove_random():
             return make_response(jsonify({'error': "Nothing to remove"}))
 
 
-@app.route('/api/v1.0/orders/remove/<string:service_type>', methods=['GET'])
-def remove_order(service_type):
-    global orders
-    global max_orders
-
-    with lock:
-        for i in range(0, len(orders)):
-            if orders[i].service_type == service_type:
-                order = orders[i]
-                orders.remove(order)
-                return jsonify({'removed': order})
-
-    return make_response(jsonify({'error': 'Not found'}), 404)
-
-
-@app.route('/api/v1.0/orders/search/<string:service_type>', methods=['GET'])
-def get_order(service_type):
-    global orders
-
-    for i in range(0, len(orders)):
-        if orders[i].service_type == service_type:
-            return jsonify({'order': orders[i]})
-
-    return make_response(jsonify({'error': 'Not found'}), 404)
-
-
 @app.route('/api/v1.0/orders/deliver', methods=['GET'])
 def deliver_packages():
     global orders
