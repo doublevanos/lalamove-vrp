@@ -61,21 +61,30 @@ class Address:
         """
 
         # If no address were specified
-
         if iaddr is None:
             line = random.randrange(0, len(self.addresses))
             addr = self.addresses[line][random.randrange(0, len(self.addresses[line]))]
             self.lng = addr['coordinates']['longitude']
             self.lat = addr['coordinates']['latitude']
-            self.addr = ",".join(addr['location']['display_address'])
         else:
             gmaps = googlemaps.Client(key=self.googlemaps_key)
             geocode = gmaps.geocode(iaddr)
+
             self.lat = geocode[0]['geometry']['location']['lat']
             self.lng = geocode[0]['geometry']['location']['lng']
-            self.addr = iaddr
 
         return self.lng, self.lat
+
+
+    def set_new_coords(self, ilat, ilng):
+        self.lat = ilat
+        self.lng = ilng
+
+
+    def formatted_address(self):
+        gmaps = googlemaps.Client(key=self.googlemaps_key)
+        geocode = gmaps.reverse_geocode((self.lat, self.lng))
+        return geocode[0]['formatted_address']
 
 
     def dist(self, t_addr, s_addr=None):
