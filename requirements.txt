@@ -7,4 +7,3 @@ requests==2.9.1
 googlemaps==2.4.6
 flask
 flask-cors
-psycopg2
